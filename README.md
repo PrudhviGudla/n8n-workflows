@@ -68,4 +68,3 @@ docker run -d --name n8n --network n8n-network -p 5678:5678 \
 
 ## Repository Structure
 - /workflows: Contains the Main Agent and Tool sub-workflows.
-- /assets: Architecture diagrams and screenshots.
