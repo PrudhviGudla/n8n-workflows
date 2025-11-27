@@ -1,0 +1,460 @@
+{
+  "name": "Tool: Run SQL Safe",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "query"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -368,
+        128
+      ],
+      "id": "47a64c42-3061-4f48-b028-8dfab267a9f9",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "71c2b480-3f34-4f9c-8988-76bb67925dc7",
+              "name": "error",
+              "type": "string",
+              "value": "Security Alert: Only SELECT queries are allowed"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        128
+      ],
+      "id": "806ae6b8-3131-4dee-96e3-57281f68551b",
+      "name": "Return Error"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "EXPLAIN {{ $('Sanitize SQL').item.json.final_query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        416,
+        -160
+      ],
+      "id": "de89be10-cbe1-4aad-9eed-5548ff232c2f",
+      "name": "Execute Query",
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "API account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $('Sanitize SQL').item.json.final_query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        816,
+        -48
+      ],
+      "id": "3e20da91-0160-4c46-99d9-f75702d640a8",
+      "name": "Execute a SQL query",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "API account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -368,
+        -128
+      ],
+      "id": "c71bcd37-e297-47db-bdcc-61cc81fae85c",
+      "name": "Chat (For Testing This Workflow Independently)",
+      "webhookId": "025ec675-f2f3-48e0-b29d-4ec512757f78"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "10d7f4f3-f670-41b9-85eb-df206493333a",
+              "name": "final_query",
+              "type": "string",
+              "value": "={{ $json.chatInput || $json.query }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -128,
+        0
+      ],
+      "id": "c79deec8-9371-43d6-b0de-e6ee887695f9",
+      "name": "Normalize Input"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9f97dea4-45d4-4645-8921-c876de48616a",
+              "leftValue": "={{ $('Sanitize SQL').item.json.final_query.trim().toLowerCase() }}",
+              "rightValue": "select",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        192,
+        0
+      ],
+      "id": "d83bb3b8-2780-4bcc-9d4e-e011ff2513c3",
+      "name": "Read Only Check"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "947bb1d5-8349-49bc-9089-9edce64d7e8a",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": false,
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        608,
+        -160
+      ],
+      "id": "8e6ba36b-f99e-4b07-9f1a-7a733eff5013",
+      "name": "SQL Syntax Check"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "62904f5f-2210-4331-b195-74938abbe448",
+              "name": "final_query",
+              "type": "string",
+              "value": "={{ $json.final_query.replace(/```sql/gi, '').replace(/```/g, '').trim() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        32,
+        0
+      ],
+      "id": "21b4cc33-2914-4825-8841-0d37e3e58bd7",
+      "name": "Sanitize SQL"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8a33540e-cc24-407a-a961-433f64e69a4d",
+              "leftValue": "={{ Object.keys($json).length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        992,
+        -48
+      ],
+      "id": "fd0f1126-b467-40cb-a869-d237d3881ca9",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "70d0dce8-2773-4173-a271-92aaf00018e8",
+              "name": "error",
+              "type": "string",
+              "value": "={{ $json.error.message || $json.message || \"Unknown Database Error\" }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        816,
+        -208
+      ],
+      "id": "9b5e599a-8956-4a14-ad42-e2c1777bcbc6",
+      "name": "Return SQL Error"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "99901f18-0227-4f75-b4f4-c0879178245c",
+              "name": "result",
+              "type": "string",
+              "value": "No Output"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1200,
+        -160
+      ],
+      "id": "7322c3b4-2586-46e6-8b4a-88d7159d4b66",
+      "name": "Return Message"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d8b80870-4ea7-475a-a857-51c895f70c6e",
+              "name": "result",
+              "type": "string",
+              "value": "={{ $json }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1200,
+        48
+      ],
+      "id": "4c5291c9-e8ca-4765-a5c6-1e70174ce29a",
+      "name": "Return Empty Data"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Query": {
+      "main": [
+        [
+          {
+            "node": "SQL Syntax Check",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Chat (For Testing This Workflow Independently)": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Input": {
+      "main": [
+        [
+          {
+            "node": "Sanitize SQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Only Check": {
+      "main": [
+        [
+          {
+            "node": "Execute Query",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SQL Syntax Check": {
+      "main": [
+        [
+          {
+            "node": "Return SQL Error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sanitize SQL": {
+      "main": [
+        [
+          {
+            "node": "Read Only Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return SQL Error": {
+      "main": [
+        []
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Return Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Empty Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6713d5dc-d182-40da-a9e4-bb076c5f8d92",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "37e5b85ad70776dad60f6f7b160d2f55df1726ebe85d49a9bc3de3a145fbf2b1"
+  },
+  "id": "CSTMJwKw1irnB6gt",
+  "tags": []
+}

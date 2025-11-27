@@ -1,0 +1,70 @@
+{
+  "name": "Tool:Schema",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT table_name, column_name, data_type\nFROM information_schema.columns\nWHERE table_schema = 'public';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        304,
+        96
+      ],
+      "id": "723baf07-6476-41d6-92c7-266a06cfd25d",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "API account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "unused_input"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        112,
+        96
+      ],
+      "id": "24ef3374-511d-4539-b3fe-2fc551d1669e",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "583031d9-5897-479f-9d69-cb75c3c6af13",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "37e5b85ad70776dad60f6f7b160d2f55df1726ebe85d49a9bc3de3a145fbf2b1"
+  },
+  "id": "IvAqM2J2u1bHitsf",
+  "tags": []
+}
