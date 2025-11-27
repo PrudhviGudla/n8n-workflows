@@ -39,16 +39,16 @@ I configured ngrok to run as a **Windows Service** pointing to a static domain, 
     ngrok service start
     ```
 
-🚀 Installation & Setup
+## Installation & Setup
 Use these commands to spin up the network and containers. Note that n8n is linked to the n8n_data volume to preserve your login.
 
-# 1. Create Network
+### 1. Create Network
 
 ```
 docker network create n8n-network
 ```
 
-# 2. Run Postgres (The Target DB)
+### 2. Run Postgres (If needed a Target DB for connecting to workflows)
 
 ```
 docker run -d --name postgres --network n8n-network --restart unless-stopped \
@@ -56,7 +56,7 @@ docker run -d --name postgres --network n8n-network --restart unless-stopped \
   -v postgres_data:/var/lib/postgresql/data postgres:16-alpine
 ```
 
-# 3. Run n8n (Linked to ngrok & Postgres)
+### 3. Run n8n (Linked to ngrok & Postgres)
 
 ```
 # Replace WEBHOOK_URL with your actual ngrok domain
